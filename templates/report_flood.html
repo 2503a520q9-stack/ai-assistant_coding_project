@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}Report Flood - FloodRescue AI{% endblock %}
+{% block content %}
+<div class="container py-4">
+    <div class="row justify-content-center"><div class="col-lg-7">
+        <div class="card"><div class="card-header"><i class="bi bi-exclamation-triangle-fill text-warning"></i> Report a flooded area</div>
+        <div class="card-body">
+            <p class="text-muted">Reports are reviewed by an administrator before they are marked as verified. They help the risk engine and the map.</p>
+            <form method="post" novalidate>
+                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                <input type="hidden" id="latitude" name="latitude" value="{{ form.get('latitude','') }}">
+                <input type="hidden" id="longitude" name="longitude" value="{{ form.get('longitude','') }}">
+                <div class="mb-3"><label class="form-label" for="location_name">Where is the flooding? *</label>
+                    <input class="form-control" id="location_name" name="location_name" required maxlength="150" value="{{ form.get('location_name','') }}" placeholder="Street, landmark, area">
+                    <button type="button" id="use-location" class="btn btn-sm btn-outline-primary mt-2"><i class="bi bi-crosshair"></i> Use my GPS location (shows the report on the map)</button>
+                    <span id="location-note" class="small text-muted ms-2"></span></div>
+                <div class="row g-3 mb-3">
+                    <div class="col-sm-6"><label class="form-label" for="severity">Severity *</label>
+                        <select class="form-select" id="severity" name="severity">
+                            {% for s in ['Low','Medium','High'] %}<option {{ 'selected' if form.get('severity','Medium') == s }}>{{ s }}</option>{% endfor %}</select></div>
+                    <div class="col-sm-6"><label class="form-label" for="water_depth_cm">Water depth (cm)</label>
+                        <input class="form-control" type="number" min="0" max="1000" id="water_depth_cm" name="water_depth_cm" value="{{ form.get('water_depth_cm','0') }}"></div>
+                </div>
+                <div class="mb-3"><label class="form-label" for="description">What do you see? *</label>
+                    <textarea class="form-control" rows="3" id="description" name="description" required maxlength="500">{{ form.get('description','') }}</textarea></div>
+                <div class="mb-3"><label class="form-label" for="reporter_name">Your name (optional)</label>
+                    <input class="form-control" id="reporter_name" name="reporter_name" maxlength="80" value="{{ form.get('reporter_name') or (current_user.name if current_user else '') }}"></div>
+                <button class="btn btn-cyan w-100 py-2">Submit flood report</button>
+            </form>
+        </div></div>
+    </div></div>
+</div>
+{% endblock %}

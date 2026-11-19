@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+{% block title %}Flood Alerts - FloodRescue AI{% endblock %}
+{% block content %}
+<div class="container py-4">
+    <h3><i class="bi bi-bell-fill text-danger"></i> Flood alerts &amp; notifications</h3>
+    <div class="alert alert-warning small"><i class="bi bi-info-circle"></i>
+        Alerts marked <span class="sim-tag">Simulated</span> are sample alerts for the college demo. They are <b>not official government warnings</b>.</div>
+
+    <form class="row g-2 mb-3" method="get">
+        <div class="col-md-4"><select class="form-select" name="type" onchange="this.form.submit()">
+            <option value="">All alert types</option>{% for t in ALERT_TYPES %}<option {{ 'selected' if t == typ }}>{{ t }}</option>{% endfor %}</select></div>
+        <div class="col-md-4"><select class="form-select" name="severity" onchange="this.form.submit()">
+            <option value="">All severities</option>{% for s in ALERT_SEVERITIES %}<option {{ 'selected' if s == sev }}>{{ s }}</option>{% endfor %}</select></div>
+        <div class="col-md-2"><a class="btn btn-outline-secondary w-100" href="{{ url_for('alerts') }}">Reset</a></div>
+    </form>
+
+    <div class="row g-4">
+        <div class="col-lg-8">
+            {% for a in alerts %}
+            <div class="card mb-3 {{ 'opacity-50' if not a.is_active }}" style="border-left:6px solid var(--{{ 'red' if a.severity in ('Severe','Warning') else 'cyan' }})">
+                <div class="card-body">
+                    <div class="d-flex flex-wrap justify-content-between gap-2">
+                        <div><span class="badge text-bg-{{ a.severity|badge }}">{{ a.severity }}</span>
+                            <span class="badge text-bg-light border">{{ a.alert_type }}</span>
+                            {% if a.is_simulated %}<span class="sim-tag">Simulated</span>{% endif %}
+                            {% if not a.is_active %}<span class="badge text-bg-secondary">Hidden</span>{% endif %}</div>
+                        <span class="small text-muted"><i class="bi bi-clock"></i> {{ a.created_at }}</span>
+                    </div>
+                    <h6 class="mt-2 mb-1">{{ a.title }}</h6>
+                    <p class="mb-2">{{ a.message }}</p>
+                    <div class="small text-muted"><i class="bi bi-geo-alt"></i> {{ a.location }} &middot; Source: {{ a.source }}</div>
+                    {% if current_user and current_user.role == 'admin' %}
+                    <div class="d-flex gap-2 mt-2">
+                        <form method="post" action="{{ url_for('alert_toggle', aid=a.id) }}"><input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                            <button class="btn btn-sm btn-outline-secondary">{{ 'Hide' if a.is_active else 'Show' }}</button></form>
+                        <form method="post" action="{{ url_for('alert_delete', aid=a.id) }}" data-confirm="Delete this alert permanently?"><input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                            <button class="btn btn-sm btn-outline-danger">Delete</button></form>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% else %}
+            <div class="alert alert-info">No alerts match your filters.</div>
+            {% endfor %}
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card mb-3"><div class="card-header">Recent flood reports</div>
+                <ul class="list-group list-group-flush">
+                    {% for r in reports %}
+                    <li class="list-group-item small"><b>{{ r.location_name }}</b>
+                        <span class="badge text-bg-{{ r.severity|badge }}">{{ r.severity }}</span>
+                        <span class="badge text-bg-{{ r.status|badge }}">{{ r.status }}</span>
+                        {% if r.is_simulated %}<span class="sim-tag">Simulated</span>{% endif %}<br>{{ r.description }}<br>
+                        <span class="text-muted">{{ r.created_at }}</span></li>
+                    {% else %}<li class="list-group-item text-muted small">No reports yet.</li>{% endfor %}
+                </ul>
+                <div class="card-footer bg-white"><a href="{{ url_for('report_flood') }}" class="btn btn-sm btn-cyan w-100">Report flooding</a></div>
+            </div>
+
+            {% if current_user and current_user.role == 'admin' %}
+            <div class="card"><div class="card-header">Publish an alert (admin)</div><div class="card-body">
+                <form method="post" action="{{ url_for('alert_add') }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                    <div class="mb-2"><input class="form-control" name="title" placeholder="Title" required maxlength="120"></div>
+                    <div class="mb-2"><textarea class="form-control" name="message" rows="3" placeholder="Message" required maxlength="500"></textarea></div>
+                    <div class="mb-2"><input class="form-control" name="location" placeholder="Location" required></div>
+                    <div class="row g-2 mb-2">
+                        <div class="col-6"><select class="form-select" name="alert_type">{% for t in ALERT_TYPES %}<option>{{ t }}</option>{% endfor %}</select></div>
+                        <div class="col-6"><select class="form-select" name="severity">{% for s in ALERT_SEVERITIES %}<option>{{ s }}</option>{% endfor %}</select></div>
+                    </div>
+                    <div class="mb-2"><input class="form-control" name="source" placeholder="Source (optional)"></div>
+                    <div class="form-check mb-3"><input class="form-check-input" type="checkbox" name="is_simulated" id="sim" value="1" checked>
+                        <label class="form-check-label small" for="sim">This is a demo/simulated alert</label></div>
+                    <button class="btn btn-navy w-100">Publish alert</button>
+                </form>
+            </div></div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

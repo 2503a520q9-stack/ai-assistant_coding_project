@@ -1,0 +1,55 @@
+{% extends "admin_base.html" %}
+{% block title %}Rescue Teams - FloodRescue AI{% endblock %}
+{% block content %}
+<h3 class="mb-1">Rescue team management</h3>
+<p class="text-muted small">Sample team information for the demo. There is no live GPS tracking; mission status comes from the requests assigned to each team.</p>
+<div class="row g-3">
+    {% for t in teams %}
+    <div class="col-md-6 col-xxl-4">
+        <div class="card h-100"><div class="card-body">
+            <div class="d-flex justify-content-between align-items-start">
+                <div><h6 class="mb-0">{{ t.name }}</h6><small class="text-muted">{{ t.team_code }} &middot; {{ t.members }} members &middot; {{ t.base_location }}</small></div>
+                <span class="badge text-bg-{{ t.status|badge }}">{{ t.status }}</span>
+            </div>
+            <div class="small mt-2"><i class="bi bi-person-badge"></i> {{ t.leader }} &middot; <i class="bi bi-telephone"></i> {{ t.phone }}</div>
+            <hr class="my-2">
+            <div class="small fw-semibold">Assigned requests</div>
+            {% set ms = missions[t.id] %}
+            {% if ms %}
+            <ul class="list-unstyled small mb-2">
+                {% for r in ms %}<li class="d-flex justify-content-between"><a href="{{ url_for('request_detail', rid=r.request_id) }}">{{ r.request_id }}</a>
+                    <span class="badge text-bg-{{ r.status|badge }}">{{ r.status }}</span></li>{% endfor %}
+            </ul>
+            {% else %}<div class="small text-muted mb-2">No requests assigned.</div>{% endif %}
+
+            {% if t.status != 'Off Duty' and open_requests %}
+            <form method="post" action="{{ url_for('team_assign', tid=t.id) }}" class="d-flex gap-2 mb-2">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                <select class="form-select form-select-sm" name="request_id">
+                    {% for r in open_requests %}<option value="{{ r.request_id }}">{{ r.request_id }} ({{ r.urgency }})</option>{% endfor %}</select>
+                <button class="btn btn-sm btn-cyan">Assign</button>
+            </form>
+            {% endif %}
+            <form method="post" action="{{ url_for('team_status', tid=t.id) }}" class="d-flex gap-2">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                <select class="form-select form-select-sm" name="status">
+                    <option {{ 'selected' if t.status != 'Off Duty' }}>Available</option><option {{ 'selected' if t.status == 'Off Duty' }}>Off Duty</option></select>
+                <button class="btn btn-sm btn-outline-secondary">Set availability</button>
+            </form>
+        </div></div>
+    </div>
+    {% endfor %}
+</div>
+
+<div class="card mt-4"><div class="card-header"><i class="bi bi-plus-circle"></i> Add a rescue team</div><div class="card-body">
+    <form method="post" action="{{ url_for('team_add') }}" class="row g-3">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+        <div class="col-md-2"><label class="form-label">Team ID *</label><input class="form-control" name="team_code" placeholder="RT-06" required></div>
+        <div class="col-md-4"><label class="form-label">Team name *</label><input class="form-control" name="name" required></div>
+        <div class="col-md-3"><label class="form-label">Leader *</label><input class="form-control" name="leader" required></div>
+        <div class="col-md-3"><label class="form-label">Phone *</label><input class="form-control" name="phone" required></div>
+        <div class="col-md-2"><label class="form-label">Members *</label><input class="form-control" type="number" name="members" min="1" max="200" value="5" required></div>
+        <div class="col-md-5"><label class="form-label">Base location</label><input class="form-control" name="base_location"></div>
+        <div class="col-md-3 d-flex align-items-end"><button class="btn btn-navy w-100">Add team</button></div>
+    </form></div></div>
+{% endblock %}

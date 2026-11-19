@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block title %}Flood Map - FloodRescue AI{% endblock %}
+{% block head %}<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">{% endblock %}
+{% block content %}
+<div class="container-fluid px-lg-4 py-4">
+    <div class="d-flex flex-wrap justify-content-between align-items-center mb-3">
+        <div><h3 class="mb-0">Flood monitoring map</h3>
+            <span class="text-muted small">Locations, shelters and public flood reports on OpenStreetMap</span></div>
+        <a href="{{ url_for('report_flood') }}" class="btn btn-cyan"><i class="bi bi-plus-circle"></i> Report flooding</a>
+    </div>
+    <div class="alert alert-warning small"><i class="bi bi-info-circle"></i>
+        Locations marked <span class="sim-tag">Simulated</span> are sample data for the college demonstration. They are not live measurements or official warnings.</div>
+    <div class="row g-3">
+        <div class="col-lg-3">
+            <div class="card mb-3"><div class="card-body">
+                <input id="search" class="form-control mb-3" placeholder="Search place or city...">
+                <div class="small fw-semibold mb-1">Risk level</div>
+                <div class="form-check"><input class="form-check-input" type="checkbox" id="f-low" checked><label class="form-check-label" for="f-low"><span class="legend-dot" style="background:#2fb36d"></span>Low</label></div>
+                <div class="form-check"><input class="form-check-input" type="checkbox" id="f-medium" checked><label class="form-check-label" for="f-medium"><span class="legend-dot" style="background:#f0a500"></span>Medium</label></div>
+                <div class="form-check mb-3"><input class="form-check-input" type="checkbox" id="f-high" checked><label class="form-check-label" for="f-high"><span class="legend-dot" style="background:#e5383b"></span>High</label></div>
+                <div class="small fw-semibold mb-1">Layers</div>
+                <div class="form-check"><input class="form-check-input" type="checkbox" id="layer-locations" checked><label class="form-check-label" for="layer-locations">Flood-prone locations</label></div>
+                <div class="form-check"><input class="form-check-input" type="checkbox" id="layer-shelters" checked><label class="form-check-label" for="layer-shelters"><i class="bi bi-house-heart-fill text-primary"></i> Shelters</label></div>
+                <div class="form-check"><input class="form-check-input" type="checkbox" id="layer-reports" checked><label class="form-check-label" for="layer-reports"><i class="bi bi-exclamation-triangle-fill text-warning"></i> Flood reports</label></div>
+            </div></div>
+            <div class="card"><div class="card-header">Locations</div>
+                <div class="list-group list-group-flush map-side" id="result-list" style="max-height:260px"></div></div>
+        </div>
+        <div class="col-lg-6"><div id="map"></div></div>
+        <div class="col-lg-3">
+            <div class="card"><div class="card-header">Location details</div>
+                <div class="card-body" id="detail"><p class="text-muted small mb-0">Click a location marker or a name in the list to see rainfall, river level, source and update time.</p></div></div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="{{ url_for('static', filename='js/map.js') }}"></script>
+{% endblock %}

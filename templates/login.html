@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block title %}Login - FloodRescue AI{% endblock %}
+{% block content %}
+<div class="auth-wrap">
+    <div class="auth-card">
+        <div class="brand-ico"><i class="bi bi-water"></i></div>
+        <h3 class="text-center mb-1">Welcome back</h3>
+        <p class="text-center text-muted">Log in as a public user or administrator.</p>
+        <form method="post" novalidate>
+            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+            <div class="mb-3">
+                <label class="form-label" for="email">Email</label>
+                <input class="form-control" type="email" id="email" name="email" required autofocus>
+            </div>
+            <div class="mb-3">
+                <label class="form-label" for="password">Password</label>
+                <input class="form-control" type="password" id="password" name="password" required>
+            </div>
+            <button class="btn btn-navy w-100 py-2">Login</button>
+        </form>
+        <p class="text-center mt-3 mb-1 small">New here? <a href="{{ url_for('register') }}">Create an account</a></p>
+        <div class="alert alert-light border small mt-3 mb-0">
+            <b>Demo accounts</b> (sample data)<br>
+            Admin: admin@floodrescue.local / Admin@123<br>
+            User: user@floodrescue.local / User@1234
+        </div>
+    </div>
+</div>
+{% endblock %}

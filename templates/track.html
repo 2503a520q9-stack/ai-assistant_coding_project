@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block title %}Track Request - FloodRescue AI{% endblock %}
+{% block content %}
+<div class="container py-4">
+    <div class="row justify-content-center"><div class="col-lg-8">
+        <div class="card mb-4"><div class="card-body">
+            <h5><i class="bi bi-search"></i> Track a rescue request</h5>
+            <form method="get" class="row g-2">
+                <div class="col-sm-9"><input class="form-control" name="request_id" value="{{ rid }}" placeholder="Enter request ID, e.g. FR-20261013-AB12C" required></div>
+                <div class="col-sm-3"><button class="btn btn-navy w-100">Check status</button></div>
+            </form>
+        </div></div>
+
+        {% if req %}
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span>Request {{ req.request_id }}</span>
+                <span class="badge text-bg-{{ req.status|badge }} fs-6">{{ req.status }}</span>
+            </div>
+            <div class="card-body">
+                <div class="row g-3 mb-3">
+                    <div class="col-sm-6"><div class="small text-muted">Name</div>{{ req.name }}</div>
+                    <div class="col-sm-6"><div class="small text-muted">Location</div>{{ req.location }}</div>
+                    <div class="col-sm-4"><div class="small text-muted">People</div>{{ req.people_count }}</div>
+                    <div class="col-sm-4"><div class="small text-muted">Urgency</div><span class="badge text-bg-{{ req.urgency|badge }}">{{ req.urgency }}</span></div>
+                    <div class="col-sm-4"><div class="small text-muted">Assigned team</div>{{ (req.team_code ~ ' ' ~ req.team_name) if req.team_name else 'Not assigned yet' }}</div>
+                    <div class="col-12"><div class="small text-muted">Description</div>{{ req.description }}</div>
+                </div>
+                <h6>Progress</h6>
+                <ul class="timeline">
+                    {% for t in timeline %}
+                    <li><b>{{ t.status }}</b> <span class="text-muted small">{{ t.created_at }}</span><br>{{ t.note }}
+                        {% if t.team_label %}<br><small class="text-muted">Team: {{ t.team_label }}</small>{% endif %}</li>
+                    {% endfor %}
+                </ul>
+                <div class="alert alert-warning small mb-0">This is a demo system. If you are in danger call 112.</div>
+            </div>
+        </div>
+        {% endif %}
+    </div></div>
+</div>
+{% endblock %}

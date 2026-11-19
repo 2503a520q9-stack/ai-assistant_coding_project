@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block title %}Register - FloodRescue AI{% endblock %}
+{% block content %}
+<div class="auth-wrap">
+    <div class="auth-card">
+        <div class="brand-ico"><i class="bi bi-person-plus-fill"></i></div>
+        <h3 class="text-center mb-1">Create your account</h3>
+        <p class="text-center text-muted">Register to request rescue and receive updates.</p>
+        <form method="post" novalidate>
+            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+            <div class="mb-3"><label class="form-label" for="name">Full name</label>
+                <input class="form-control" id="name" name="name" value="{{ form.get('name','') }}" required maxlength="80"></div>
+            <div class="mb-3"><label class="form-label" for="email">Email</label>
+                <input class="form-control" type="email" id="email" name="email" value="{{ form.get('email','') }}" required></div>
+            <div class="mb-3"><label class="form-label" for="phone">Phone number</label>
+                <input class="form-control" type="tel" id="phone" name="phone" value="{{ form.get('phone','') }}" required placeholder="e.g. 9876543210"></div>
+            <div class="row">
+                <div class="col-sm-6 mb-3"><label class="form-label" for="password">Password</label>
+                    <input class="form-control" type="password" id="password" name="password" required minlength="8"></div>
+                <div class="col-sm-6 mb-3"><label class="form-label" for="confirm">Confirm password</label>
+                    <input class="form-control" type="password" id="confirm" name="confirm" required></div>
+            </div>
+            <div class="form-text mb-3">At least 8 characters with a letter and a number.</div>
+            <details class="mb-3">
+                <summary class="small">I am an administrator</summary>
+                <div class="mt-2"><label class="form-label small" for="admin_code">Administrator invite code</label>
+                    <input class="form-control" id="admin_code" name="admin_code" autocomplete="off">
+                    <div class="form-text">Leave empty for a public account. Demo code: FLOOD-ADMIN-2026 (change it with the ADMIN_INVITE_CODE environment variable).</div></div>
+            </details>
+            <button class="btn btn-navy w-100 py-2">Register</button>
+        </form>
+        <p class="text-center mt-3 mb-0 small">Already registered? <a href="{{ url_for('login') }}">Login</a></p>
+    </div>
+</div>
+{% endblock %}

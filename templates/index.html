@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="hero">
+    <div class="container fade-up">
+        <span class="badge text-bg-warning mb-3"><span class="live-dot"></span>Demo emergency platform</span>
+        <h1>AI-Assisted Flood Rescue &amp; Evacuation System</h1>
+        <p class="lead mt-3">Smarter emergency coordination. Faster rescue response. Safer evacuation planning.</p>
+        <div class="d-flex flex-wrap gap-3 mt-4">
+            <a class="btn btn-help btn-lg" href="{{ url_for('rescue_request') }}"><i class="bi bi-life-preserver"></i> Get Help Now</a>
+            <a class="btn btn-cyan btn-lg" href="{{ url_for('report_flood') }}"><i class="bi bi-exclamation-triangle-fill"></i> Report Flood</a>
+            <a class="btn btn-outline-light btn-lg" href="{{ url_for('alerts') }}"><i class="bi bi-bell-fill"></i> View Flood Alerts</a>
+        </div>
+    </div>
+    <svg class="hero-wave" viewBox="0 0 1440 70" preserveAspectRatio="none"><path fill="#f3f7fb" d="M0 40 Q180 0 360 30 T720 30 T1080 30 T1440 25 V70 H0Z"/></svg>
+</section>
+
+<section class="container" style="margin-top:-2.5rem; position:relative; z-index:2;">
+    <div class="card p-3 p-md-4">
+        <div class="d-flex flex-wrap justify-content-between align-items-center mb-3">
+            <h5 class="m-0"><span class="live-dot"></span>Live-style emergency status</h5>
+            <span class="sim-tag">Simulated sample data</span>
+        </div>
+        <div class="row g-3">
+            <div class="col-6 col-md"><div class="status-tile"><i class="bi bi-bell-fill ico text-danger"></i><div class="num">{{ stats.active_alerts }}</div><div class="lbl">Active alerts</div></div></div>
+            <div class="col-6 col-md"><div class="status-tile"><i class="bi bi-geo-alt-fill ico text-danger"></i><div class="num">{{ stats.high_risk }}</div><div class="lbl">High-risk areas</div></div></div>
+            <div class="col-6 col-md"><div class="status-tile"><i class="bi bi-house-heart-fill ico text-primary"></i><div class="num">{{ stats.open_shelters }}</div><div class="lbl">Shelters with space</div></div></div>
+            <div class="col-6 col-md"><div class="status-tile"><i class="bi bi-hourglass-split ico text-warning"></i><div class="num">{{ stats.pending }}</div><div class="lbl">Requests awaiting review</div></div></div>
+            <div class="col-12 col-md"><div class="status-tile"><i class="bi bi-people-fill ico text-success"></i><div class="num">{{ stats.teams_available }}</div><div class="lbl">Teams available</div></div></div>
+        </div>
+        {% if latest_alerts %}
+        <hr>
+        <div class="small fw-semibold mb-2">Latest alerts</div>
+        {% for a in latest_alerts %}
+        <div class="d-flex align-items-start gap-2 mb-2">
+            <span class="badge text-bg-{{ a.severity|badge }}">{{ a.severity }}</span>
+            <div><b>{{ a.title }}</b> <span class="text-muted small">&middot; {{ a.location }} &middot; {{ a.created_at }}</span></div>
+        </div>
+        {% endfor %}
+        <a href="{{ url_for('alerts') }}" class="small">See all alerts &rarr;</a>
+        {% endif %}
+    </div>
+</section>
+
+<section class="container py-5">
+    <div class="section-title"><h2>Key system features</h2><p>Everything a flood control room needs, in one simple web application.</p></div>
+    <div class="row g-4">
+        {% set features = [
+            ('bi-life-preserver','Rescue requests','Residents submit a request, get a unique ID and can track progress.', 'rescue_request'),
+            ('bi-map-fill','Flood monitoring map','Colour-coded risk markers, flood reports and shelters on a Leaflet map.', 'flood_map'),
+            ('bi-cpu-fill','AI risk assessment','A transparent scoring engine explains why an area is Low, Medium or High risk.', 'risk_assessment'),
+            ('bi-house-heart-fill','Shelter finder','Search shelters by city, check free capacity and view possible routes.', 'shelters'),
+            ('bi-megaphone-fill','Alerts &amp; notifications','Severity-labelled alerts published by administrators.', 'alerts'),
+            ('bi-people-fill','Team management','Assign rescue teams, update missions and keep the status in sync.', 'login')] %}
+        {% for icon, title, text, link in features %}
+        <div class="col-md-6 col-lg-4">
+            <a href="{{ url_for(link) }}" class="text-decoration-none">
+                <div class="feature-card">
+                    <div class="icon-box"><i class="bi {{ icon }}"></i></div>
+                    <h5>{{ title|safe }}</h5><p class="text-muted mb-0">{{ text }}</p>
+                </div>
+            </a>
+        </div>
+        {% endfor %}
+    </div>
+</section>
+
+<section class="container pb-5">
+    <div class="section-title"><h2>How the rescue process works</h2></div>
+    <div class="row g-3">
+        <div class="col-6 col-md-3"><div class="step"><div class="circle">1</div><h6>Request</h6><p class="small text-muted">A person submits a rescue request with location, people and urgency.</p></div></div>
+        <div class="col-6 col-md-3"><div class="step"><div class="circle">2</div><h6>Prioritise</h6><p class="small text-muted">The system scores the request so urgent cases appear first for human review.</p></div></div>
+        <div class="col-6 col-md-3"><div class="step"><div class="circle">3</div><h6>Assign</h6><p class="small text-muted">An administrator assigns an available rescue team.</p></div></div>
+        <div class="col-6 col-md-3"><div class="step"><div class="circle">4</div><h6>Rescue &amp; shelter</h6><p class="small text-muted">Progress is recorded and people are guided to a shelter with space.</p></div></div>
+    </div>
+</section>
+
+<section class="container">
+    <div class="tips">
+        <h2 class="mb-3"><i class="bi bi-shield-check"></i> Emergency preparedness tips</h2>
+        <div class="row">
+            <div class="col-md-6"><ul>
+                <li>Know your nearest shelter and two ways to reach it.</li>
+                <li>Keep an emergency kit: water, food, torch, power bank, medicines.</li>
+                <li>Store documents in a waterproof bag.</li>
+            </ul></div>
+            <div class="col-md-6"><ul>
+                <li>Move to higher ground early when authorities advise it.</li>
+                <li>Never walk or drive through flood water.</li>
+                <li>Switch off electricity at the main switch if water enters your home.</li>
+            </ul></div>
+        </div>
+    </div>
+</section>
+{% endblock %}

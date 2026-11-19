@@ -1,0 +1,69 @@
+{% extends "admin_base.html" %}
+{% block title %}Admin Dashboard - FloodRescue AI{% endblock %}
+{% block head %}<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>{% endblock %}
+{% block content %}
+<div class="d-flex flex-wrap justify-content-between align-items-center mb-3">
+    <div><h3 class="mb-0">Rescue management dashboard</h3><span class="text-muted small">Welcome, {{ current_user.name }}</span></div>
+    <div class="d-flex gap-2">
+        <a class="btn btn-help btn-sm" href="{{ url_for('rescue_management') }}?status=Pending">Review pending requests</a>
+        <a class="btn btn-cyan btn-sm" href="{{ url_for('alerts') }}">Publish alert</a>
+    </div>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-6 col-xl-3"><div class="kpi navy"><div class="num">{{ stats.total }}</div><div class="lbl">Total rescue requests</div></div></div>
+    <div class="col-6 col-xl-3"><div class="kpi orange"><div class="num">{{ stats.pending }}</div><div class="lbl">Pending / under review</div></div></div>
+    <div class="col-6 col-xl-3"><div class="kpi red"><div class="num">{{ stats.urgent }}</div><div class="lbl">Urgent open requests</div></div></div>
+    <div class="col-6 col-xl-3"><div class="kpi green"><div class="num">{{ stats.active_teams }} <small class="fs-6 text-muted">/ {{ stats.active_teams + stats.available_teams }}</small></div><div class="lbl">Teams on mission (available: {{ stats.available_teams }})</div></div></div>
+    <div class="col-6 col-xl-3"><div class="kpi"><div class="num">{{ stats.shelters }}</div><div class="lbl">Shelters with space ({{ stats.free_beds }} free places)</div></div></div>
+    <div class="col-6 col-xl-3"><div class="kpi red"><div class="num">{{ stats.high_risk }}</div><div class="lbl">High-risk locations</div></div></div>
+    <div class="col-6 col-xl-3"><div class="kpi orange"><div class="num">{{ stats.unverified }}</div><div class="lbl">Flood reports to verify</div></div></div>
+    <div class="col-6 col-xl-3"><div class="kpi navy"><a class="btn btn-sm btn-navy" href="{{ url_for('risk_assessment') }}">Run AI risk check</a><div class="lbl mt-2">Rule-based, simulated</div></div></div>
+</div>
+
+<div class="row g-4">
+    <div class="col-xl-7">
+        <div class="card mb-4"><div class="card-header d-flex justify-content-between"><span><i class="bi bi-exclamation-octagon-fill text-danger"></i> Urgent requests for human review</span>
+            <a href="{{ url_for('rescue_management') }}" class="small">All requests</a></div>
+            <div class="table-responsive"><table class="table mb-0">
+                <thead><tr><th>ID</th><th>Name / location</th><th>People</th><th>Priority</th><th></th></tr></thead>
+                <tbody>
+                {% for r in urgent_requests %}
+                <tr class="row-urgent"><td><small>{{ r.request_id }}</small></td>
+                    <td>{{ r.name }}<br><small class="text-muted">{{ r.location }}</small></td>
+                    <td>{{ r.people_count }}</td>
+                    <td><span class="badge text-bg-{{ r.urgency|badge }}">{{ r.urgency }}</span> <small>{{ r.priority_score }}</small></td>
+                    <td><a class="btn btn-sm btn-navy" href="{{ url_for('request_detail', rid=r.request_id) }}">Open</a></td></tr>
+                {% else %}<tr><td colspan="5" class="text-center text-muted py-3">No urgent open requests.</td></tr>{% endfor %}
+                </tbody></table></div></div>
+
+        <div class="card"><div class="card-header">Recently reported flood incidents</div>
+            <ul class="list-group list-group-flush">
+                {% for i in incidents %}
+                <li class="list-group-item"><span class="badge text-bg-{{ i.severity|badge }}">{{ i.severity }}</span>
+                    <b>{{ i.location_name }}</b> <span class="badge text-bg-{{ i.status|badge }}">{{ i.status }}</span>
+                    {% if i.is_simulated %}<span class="sim-tag">Simulated</span>{% endif %}
+                    <div class="small">{{ i.description }}</div><div class="small text-muted">{{ i.created_at }}</div></li>
+                {% else %}<li class="list-group-item text-muted">No incidents reported.</li>{% endfor %}
+            </ul>
+            <div class="card-footer bg-white"><a href="{{ url_for('admin_reports') }}" class="small">Review all flood reports &rarr;</a></div></div>
+    </div>
+    <div class="col-xl-5">
+        <div class="card"><div class="card-header">Requests by status</div>
+            <div class="card-body"><canvas id="statusChart" height="260"></canvas></div></div>
+    </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+    (function () {
+        if (!window.Chart) { return; }
+        new Chart(document.getElementById("statusChart"), {
+            type: "doughnut",
+            data: { labels: {{ chart_labels|tojson }},
+                    datasets: [{ data: {{ chart_data|tojson }}, backgroundColor: ["#8a97a5", "#00b8d9", "#0b6fa4", "#ff8a1f", "#2fb36d", "#0a2540"] }] },
+            options: { plugins: { legend: { position: "bottom" } } }
+        });
+    })();
+</script>
+{% endblock %}

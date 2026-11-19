@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block body %}
+<div class="admin-layout">
+    <aside class="sidebar">
+        <div class="side-title">Control room</div>
+        <a href="{{ url_for('dashboard') }}" class="{{ 'active' if request.endpoint == 'dashboard' }}"><i class="bi bi-speedometer2"></i> Dashboard</a>
+        <a href="{{ url_for('rescue_management') }}" class="{{ 'active' if request.endpoint in ('rescue_management', 'request_detail') }}"><i class="bi bi-life-preserver"></i> Rescue requests</a>
+        <a href="{{ url_for('teams') }}" class="{{ 'active' if request.endpoint == 'teams' }}"><i class="bi bi-people-fill"></i> Rescue teams</a>
+        <a href="{{ url_for('shelters') }}"><i class="bi bi-house-heart-fill"></i> Shelters</a>
+        <a href="{{ url_for('alerts') }}"><i class="bi bi-megaphone-fill"></i> Alerts</a>
+        <a href="{{ url_for('admin_reports') }}" class="{{ 'active' if request.endpoint == 'admin_reports' }}"><i class="bi bi-clipboard-check"></i> Flood reports</a>
+        <a href="{{ url_for('risk_assessment') }}"><i class="bi bi-cpu-fill"></i> AI risk check</a>
+        <a href="{{ url_for('flood_map') }}"><i class="bi bi-map-fill"></i> Flood map</a>
+    </aside>
+    <main class="admin-main">
+        {% block content %}{% endblock %}
+    </main>
+</div>
+{% endblock %}

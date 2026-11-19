@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+{% block title %}Shelters - FloodRescue AI{% endblock %}
+{% block head %}<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">{% endblock %}
+{% block content %}
+<div class="container py-4">
+    <h3><i class="bi bi-house-heart-fill text-primary"></i> Evacuation shelter finder</h3>
+    <div class="alert alert-warning small"><i class="bi bi-exclamation-triangle-fill"></i>
+        Shelter details here are <b>sample data</b>. Routes come from a public routing service and are
+        <b>not verified against current flood conditions</b>. Always follow local authority guidance.</div>
+
+    <form class="row g-2 mb-3" method="get">
+        <div class="col-md-6"><input class="form-control" name="q" value="{{ q }}" placeholder="Search by city, area or shelter name"></div>
+        <div class="col-md-3 d-flex align-items-center">
+            <div class="form-check"><input class="form-check-input" type="checkbox" name="available" value="1" id="available" {{ 'checked' if only_available }}>
+                <label class="form-check-label" for="available">Only shelters with space</label></div></div>
+        <div class="col-md-3 d-flex gap-2"><button class="btn btn-navy flex-fill">Search</button>
+            <a class="btn btn-outline-secondary" href="{{ url_for('shelters') }}">Reset</a></div>
+    </form>
+
+    <div id="route-info" class="alert alert-warning small d-none"></div>
+    <div id="shelter-map" class="mb-4"></div>
+
+    <div class="row g-3">
+        {% for s in shelters %}
+        {% set free = s.capacity - s.occupancy %}
+        {% set pct = (s.occupancy / s.capacity * 100)|round|int %}
+        <div class="col-md-6 col-xl-4">
+            <div class="card h-100" data-shelter="{{ s.id }}" data-lat="{{ s.latitude }}" data-lng="{{ s.longitude }}"
+                 data-name="{{ s.name }}" data-address="{{ s.address }}" data-open="{{ 1 if s.status == 'Open' and free > 0 else 0 }}">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <h6 class="mb-1">{{ s.name }}</h6>
+                        <span class="badge text-bg-{{ s.status|badge }}">{{ s.status }}</span>
+                    </div>
+                    <div class="small text-muted mb-2"><i class="bi bi-geo-alt"></i> {{ s.address }}
+                        {% if s.is_simulated %}<span class="sim-tag">Simulated</span>{% endif %}</div>
+                    <div class="small mb-1">Occupancy: <b>{{ s.occupancy }}</b> / {{ s.capacity }} &middot; <b>{{ free }}</b> free</div>
+                    <div class="progress mb-2" style="height:8px"><div class="progress-bar {{ 'bg-danger' if pct >= 90 else ('bg-warning' if pct >= 70 else 'bg-success') }}" style="width:{{ pct }}%"></div></div>
+                    <div class="small"><b>Facilities:</b> {{ s.facilities or 'Not listed' }}</div>
+                    <div class="small"><b>Accessibility:</b> {{ s.accessibility or 'Information not available' }}</div>
+                    <div class="small"><b>Contact:</b> {{ s.contact or '-' }}</div>
+                    <div class="small text-muted">Updated {{ s.updated_at }}</div>
+                    <div class="d-flex gap-2 mt-3">
+                        <button type="button" class="btn btn-sm btn-outline-primary focus-btn"><i class="bi bi-pin-map"></i> Show on map</button>
+                        <button type="button" class="btn btn-sm btn-cyan route-btn"><i class="bi bi-signpost-split"></i> Route</button>
+                    </div>
+                </div>
+                {% if current_user and current_user.role == 'admin' %}
+                <div class="card-footer bg-white">
+                    <form method="post" action="{{ url_for('shelter_update', sid=s.id) }}" class="row g-2 align-items-end">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                        <div class="col-4"><label class="form-label small mb-0">Occupancy</label>
+                            <input class="form-control form-control-sm" type="number" name="occupancy" min="0" max="{{ s.capacity }}" value="{{ s.occupancy }}"></div>
+                        <div class="col-5"><label class="form-label small mb-0">Status</label>
+                            <select class="form-select form-select-sm" name="status">{% for st in SHELTER_STATUSES %}<option {{ 'selected' if st == s.status }}>{{ st }}</option>{% endfor %}</select></div>
+                        <div class="col-3"><button class="btn btn-sm btn-navy w-100">Save</button></div>
+                    </form>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        {% else %}
+        <div class="col-12"><div class="alert alert-info">No shelters match your search.</div></div>
+        {% endfor %}
+    </div>
+
+    {% if current_user and current_user.role == 'admin' %}
+    <div class="card mt-4"><div class="card-header"><i class="bi bi-plus-circle"></i> Add a shelter (admin)</div>
+        <div class="card-body">
+            <form method="post" action="{{ url_for('shelter_add') }}" class="row g-3">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                <div class="col-md-4"><label class="form-label">Name *</label><input class="form-control" name="name" required></div>
+                <div class="col-md-5"><label class="form-label">Address *</label><input class="form-control" name="address" required></div>
+                <div class="col-md-3"><label class="form-label">City *</label><input class="form-control" name="city" required></div>
+                <div class="col-md-3"><label class="form-label">Latitude *</label><input class="form-control" name="latitude" type="number" step="any" required></div>
+                <div class="col-md-3"><label class="form-label">Longitude *</label><input class="form-control" name="longitude" type="number" step="any" required></div>
+                <div class="col-md-2"><label class="form-label">Capacity *</label><input class="form-control" name="capacity" type="number" min="1" required></div>
+                <div class="col-md-2"><label class="form-label">Occupancy</label><input class="form-control" name="occupancy" type="number" min="0" value="0"></div>
+                <div class="col-md-2"><label class="form-label">Status</label><select class="form-select" name="status">{% for st in SHELTER_STATUSES %}<option>{{ st }}</option>{% endfor %}</select></div>
+                <div class="col-md-5"><label class="form-label">Facilities</label><input class="form-control" name="facilities" placeholder="Water, food, medical corner..."></div>
+                <div class="col-md-4"><label class="form-label">Accessibility</label><input class="form-control" name="accessibility" placeholder="Ramp, ground floor..."></div>
+                <div class="col-md-3"><label class="form-label">Contact</label><input class="form-control" name="contact"></div>
+                <div class="col-12"><button class="btn btn-navy">Add shelter</button></div>
+            </form>
+        </div></div>
+    {% endif %}
+</div>
+{% endblock %}
+{% block scripts %}
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="{{ url_for('static', filename='js/map.js') }}"></script>
+{% endblock %}

@@ -1,0 +1,53 @@
+{% extends "admin_base.html" %}
+{% block title %}{{ req.request_id }} - FloodRescue AI{% endblock %}
+{% block content %}
+<a href="{{ url_for('rescue_management') }}" class="small">&larr; Back to requests</a>
+<div class="d-flex flex-wrap justify-content-between align-items-center my-2">
+    <h3 class="mb-0">Request {{ req.request_id }}</h3>
+    <div><span class="badge text-bg-{{ req.urgency|badge }} fs-6">{{ req.urgency }}</span>
+        <span class="badge text-bg-{{ req.status|badge }} fs-6">{{ req.status }}</span></div>
+</div>
+{% if req.is_urgent and req.status not in ('Rescued','Closed') %}
+<div class="alert alert-danger py-2"><i class="bi bi-exclamation-octagon-fill"></i> Flagged as urgent (priority score {{ req.priority_score }}). Please review it as soon as possible.</div>
+{% endif %}
+<div class="row g-4">
+    <div class="col-lg-6">
+        <div class="card mb-3"><div class="card-header">Request details</div><div class="card-body">
+            <dl class="row mb-0">
+                <dt class="col-sm-4">Name</dt><dd class="col-sm-8">{{ req.name }}</dd>
+                <dt class="col-sm-4">Phone</dt><dd class="col-sm-8">{{ req.phone }}</dd>
+                <dt class="col-sm-4">Location</dt><dd class="col-sm-8">{{ req.location }}
+                    {% if req.latitude %}<br><a target="_blank" rel="noopener" href="https://www.openstreetmap.org/?mlat={{ req.latitude }}&amp;mlon={{ req.longitude }}#map=16/{{ req.latitude }}/{{ req.longitude }}">Open GPS point in OpenStreetMap</a>{% endif %}</dd>
+                <dt class="col-sm-4">People</dt><dd class="col-sm-8">{{ req.people_count }}</dd>
+                <dt class="col-sm-4">Special needs</dt><dd class="col-sm-8">{{ req.special_needs or 'None stated' }}</dd>
+                <dt class="col-sm-4">Description</dt><dd class="col-sm-8">{{ req.description }}</dd>
+                <dt class="col-sm-4">Priority score</dt><dd class="col-sm-8">{{ req.priority_score }} / 100 <small class="text-muted">(decision support only)</small></dd>
+                <dt class="col-sm-4">Submitted</dt><dd class="col-sm-8">{{ req.created_at }}</dd>
+                <dt class="col-sm-4">Last update</dt><dd class="col-sm-8">{{ req.updated_at }}</dd>
+            </dl></div></div>
+        <div class="card"><div class="card-header">Progress history</div><div class="card-body">
+            <ul class="timeline">
+                {% for t in timeline %}
+                <li><b>{{ t.status }}</b> <span class="small text-muted">{{ t.created_at }} &middot; {{ t.updated_by }}</span><br>{{ t.note }}
+                    {% if t.team_label %}<br><small class="text-muted">Team: {{ t.team_label }}</small>{% endif %}</li>
+                {% endfor %}
+            </ul></div></div>
+    </div>
+    <div class="col-lg-6">
+        <div class="card"><div class="card-header">Update status / assign team / record progress</div><div class="card-body">
+            <form method="post" action="{{ url_for('request_update', rid=req.request_id) }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                <div class="mb-3"><label class="form-label">Status</label>
+                    <select class="form-select" name="status">{% for s in STATUSES %}<option {{ 'selected' if s == req.status }}>{{ s }}</option>{% endfor %}</select></div>
+                <div class="mb-3"><label class="form-label">Rescue team</label>
+                    <select class="form-select" name="team_id"><option value="">- No team -</option>
+                        {% for t in teams %}<option value="{{ t.id }}" {{ 'selected' if t.id == req.team_id }} {{ 'disabled' if t.status == 'Off Duty' and t.id != req.team_id }}>
+                            {{ t.team_code }} - {{ t.name }} ({{ t.status }})</option>{% endfor %}</select>
+                    <div class="form-text">Assigning a team to a Pending request moves it to "Team Assigned" automatically.</div></div>
+                <div class="mb-3"><label class="form-label">Progress note</label>
+                    <textarea class="form-control" name="note" rows="3" maxlength="500" placeholder="e.g. Boat left base, ETA 20 minutes"></textarea></div>
+                <button class="btn btn-navy w-100">Save update</button>
+            </form></div></div>
+    </div>
+</div>
+{% endblock %}

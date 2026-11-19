@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+{% block title %}AI Risk Assessment - FloodRescue AI{% endblock %}
+{% block content %}
+<div class="container py-4">
+    <h3><i class="bi bi-cpu-fill text-info"></i> AI-assisted flood risk assessment</h3>
+    <div class="alert alert-warning small">
+        <b>Simulated / rule-based.</b> This tool turns the numbers you enter into a transparent score. It is <b>not</b> a real-time forecast
+        and not an official warning.</div>
+    <div class="row g-4">
+        <div class="col-lg-5">
+            <div class="card"><div class="card-header">Enter conditions</div><div class="card-body">
+                <form method="post" novalidate>
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                    <div class="mb-3"><label class="form-label" for="location_id">Known location (fills sample values)</label>
+                        <select class="form-select" id="location_id" name="location_id">
+                            <option value="">- Custom location -</option>
+                            {% for l in locations %}<option value="{{ l.id }}" {{ 'selected' if form.get('location_id') == l.id|string }}>{{ l.name }}, {{ l.city }}</option>{% endfor %}
+                        </select></div>
+                    <div class="mb-3"><label class="form-label" for="location_name">Or type a place name</label>
+                        <input class="form-control" id="location_name" name="location_name" maxlength="100" value="{{ form.get('location_name','') }}"></div>
+                    <div class="row g-3">
+                        <div class="col-6"><label class="form-label" for="rainfall">Rainfall, last 24 h (mm) *</label>
+                            <input class="form-control" type="number" step="0.1" min="0" max="1500" id="rainfall" name="rainfall" required value="{{ form.get('rainfall','') }}"></div>
+                        <div class="col-6"><label class="form-label" for="reports">Flood reports received</label>
+                            <input class="form-control" type="number" min="0" max="1000" id="reports" name="reports" value="{{ form.get('reports','0') }}"></div>
+                        <div class="col-6"><label class="form-label" for="river_level">River level (m) *</label>
+                            <input class="form-control" type="number" step="0.01" min="0" max="100" id="river_level" name="river_level" required value="{{ form.get('river_level','') }}"></div>
+                        <div class="col-6"><label class="form-label" for="danger_level">Danger level (m) *</label>
+                            <input class="form-control" type="number" step="0.01" min="0.01" max="100" id="danger_level" name="danger_level" required value="{{ form.get('danger_level','') }}"></div>
+                    </div>
+                    {% if current_user and current_user.role == 'admin' %}
+                    <div class="form-check mt-3"><input class="form-check-input" type="checkbox" id="apply_to_map" name="apply_to_map" value="1">
+                        <label class="form-check-label small" for="apply_to_map">Admin: apply this result to the selected location on the map</label></div>
+                    {% endif %}
+                    <button class="btn btn-navy w-100 mt-3 py-2"><i class="bi bi-calculator"></i> Assess risk</button>
+                </form>
+            </div></div>
+        </div>
+        <div class="col-lg-7">
+            {% if result %}
+            <div class="risk-banner {{ result.level }} mb-3">
+                <div class="d-flex justify-content-between align-items-center flex-wrap">
+                    <div><div class="small text-uppercase opacity-75">Estimated risk &middot; {{ result.location }}</div>
+                        <div class="display-5 fw-bold">{{ result.level }}</div></div>
+                    <div class="text-end"><div class="small opacity-75">Risk score</div><div class="display-6 fw-bold">{{ result.score }}/100</div></div>
+                </div>
+                <div class="gauge mt-3" style="background:rgba(255,255,255,.3)"><div data-gauge="{{ result.score }}" style="width:{{ result.score }}%;background:#fff"></div></div>
+                <div class="small mt-2 opacity-75">Simulated rule-based estimate</div>
+            </div>
+            <div class="card mb-3"><div class="card-header">Why this result? (contributing factors)</div>
+                <ul class="list-group list-group-flush">
+                    {% for f in result.factors %}
+                    <li class="list-group-item"><div class="d-flex justify-content-between"><b>{{ f.name }}</b><span>{{ f.points }} / {{ f.max }} pts</span></div>
+                        <div class="small text-muted">{{ f.detail }}</div>
+                        <div class="progress mt-1" style="height:6px"><div class="progress-bar bg-info" style="width: {{ (f.points / f.max * 100)|round|int }}%"></div></div></li>
+                    {% endfor %}
+                    {% if result.override %}<li class="list-group-item text-danger small"><i class="bi bi-exclamation-triangle-fill"></i> {{ result.override }}</li>{% endif %}
+                </ul></div>
+            <div class="card mb-3"><div class="card-header">Monitoring recommendations</div>
+                <ul class="list-group list-group-flush">{% for r in result.recommendations %}<li class="list-group-item"><i class="bi bi-check2-circle text-success"></i> {{ r }}</li>{% endfor %}</ul></div>
+            <p class="small text-muted">{{ result.disclaimer }}</p>
+            {% else %}
+            <div class="card"><div class="card-body">
+                <h5>How the score works</h5>
+                <p class="text-muted small">Score = rainfall (max 40) + river level vs danger level (max 40) + flood reports (max 20).
+                    Below 35 is <b>Low</b>, 35-64 is <b>Medium</b>, 65 or more is <b>High</b>. A river at or above its danger level is always High.
+                    Rainfall bands follow the IMD 24-hour categories. Every step is shown so you can verify the result.</p>
+                <p class="mb-0 small text-muted">Choose a location or enter values and press <b>Assess risk</b>.</p>
+            </div></div>
+            {% endif %}
+        </div>
+    </div>
+
+    {% if current_user and current_user.role == 'admin' %}
+    <div class="card mt-4"><div class="card-header d-flex justify-content-between"><span>Recent assessments (admin)</span>
+        <a href="{{ url_for('admin_reports') }}" class="small">Review reported conditions &rarr;</a></div>
+        <div class="table-responsive"><table class="table mb-0">
+            <thead><tr><th>Time</th><th>Location</th><th>Rain</th><th>River / danger</th><th>Reports</th><th>Result</th></tr></thead>
+            <tbody>{% for a in recent %}<tr><td>{{ a.created_at }}</td><td>{{ a.location_name }}</td><td>{{ a.rainfall_mm }} mm</td>
+                <td>{{ a.river_level_m }} / {{ a.danger_level_m }} m</td><td>{{ a.reported_floods }}</td>
+                <td><span class="badge text-bg-{{ a.risk_level|badge }}">{{ a.risk_level }}</span> {{ a.score }}</td></tr>
+                {% else %}<tr><td colspan="6" class="text-muted text-center">No assessments yet.</td></tr>{% endfor %}</tbody></table></div></div>
+    {% endif %}
+</div>
+{% endblock %}

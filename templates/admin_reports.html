@@ -1,0 +1,29 @@
+{% extends "admin_base.html" %}
+{% block title %}Flood Reports - FloodRescue AI{% endblock %}
+{% block content %}
+<h3 class="mb-3">Reported flood conditions</h3>
+<form class="mb-3 d-flex gap-2" method="get">
+    <select class="form-select w-auto" name="status" onchange="this.form.submit()">
+        <option value="">All reports</option>
+        {% for s in ['Unverified','Verified','Dismissed'] %}<option {{ 'selected' if s == status }}>{{ s }}</option>{% endfor %}</select>
+    <a href="{{ url_for('risk_assessment') }}" class="btn btn-outline-primary">Run AI risk check</a>
+</form>
+<div class="card"><div class="table-responsive"><table class="table mb-0">
+    <thead><tr><th>Time</th><th>Location</th><th>Severity</th><th>Depth</th><th>Description</th><th>Reporter</th><th>Status</th><th></th></tr></thead>
+    <tbody>
+    {% for r in reports %}
+    <tr><td><small>{{ r.created_at }}</small></td>
+        <td>{{ r.location_name }}{% if r.is_simulated %} <span class="sim-tag">Simulated</span>{% endif %}</td>
+        <td><span class="badge text-bg-{{ r.severity|badge }}">{{ r.severity }}</span></td>
+        <td>{{ r.water_depth_cm }} cm</td><td style="max-width:260px"><small>{{ r.description }}</small></td>
+        <td><small>{{ r.reporter_name }}</small></td>
+        <td><span class="badge text-bg-{{ r.status|badge }}">{{ r.status }}</span></td>
+        <td>
+            <form method="post" action="{{ url_for('report_status', rid=r.id) }}" class="d-flex gap-1">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                <button name="status" value="Verified" class="btn btn-sm btn-success" title="Verify"><i class="bi bi-check-lg"></i></button>
+                <button name="status" value="Dismissed" class="btn btn-sm btn-outline-secondary" title="Dismiss"><i class="bi bi-x-lg"></i></button>
+            </form></td></tr>
+    {% else %}<tr><td colspan="8" class="text-center text-muted py-4">No reports.</td></tr>{% endfor %}
+    </tbody></table></div></div>
+{% endblock %}

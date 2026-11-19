@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block title %}{{ code }} - {{ message }}{% endblock %}
+{% block content %}
+<div class="container error-page">
+    <div>
+        <div class="code">{{ code }}</div>
+        <h3>{{ message }}</h3>
+        {% if detail %}<p class="text-muted">{{ detail }}</p>{% endif %}
+        <a class="btn btn-navy mt-2" href="{{ url_for('index') }}">Back to home</a>
+    </div>
+</div>
+{% endblock %}

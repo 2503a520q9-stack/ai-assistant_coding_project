@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block title %}Request Rescue - FloodRescue AI{% endblock %}
+{% block content %}
+<div class="container py-4">
+    <div class="row justify-content-center"><div class="col-lg-8">
+        <div class="alert alert-danger"><i class="bi bi-exclamation-octagon-fill"></i>
+            <b>Life in immediate danger?</b> Call <b>112</b> first. This form is a demo and is not monitored by real rescue services.</div>
+        <div class="card"><div class="card-header"><i class="bi bi-life-preserver"></i> Rescue request form</div>
+        <div class="card-body">
+            <form method="post" novalidate>
+                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                <input type="hidden" id="latitude" name="latitude" value="{{ form.get('latitude','') }}">
+                <input type="hidden" id="longitude" name="longitude" value="{{ form.get('longitude','') }}">
+                <div class="row g-3">
+                    <div class="col-md-6"><label class="form-label" for="name">Your name *</label>
+                        <input class="form-control" id="name" name="name" required maxlength="80" value="{{ form.get('name') or (current_user.name if current_user else '') }}"></div>
+                    <div class="col-md-6"><label class="form-label" for="phone">Contact number *</label>
+                        <input class="form-control" id="phone" name="phone" type="tel" required value="{{ form.get('phone') or (current_user.phone if current_user else '') }}"></div>
+                    <div class="col-12"><label class="form-label" for="location">Current location or address *</label>
+                        <input class="form-control" id="location" name="location" required maxlength="200" value="{{ form.get('location','') }}" placeholder="Street, landmark, area, city">
+                        <button type="button" id="use-location" class="btn btn-sm btn-outline-primary mt-2"><i class="bi bi-crosshair"></i> Add my GPS location (optional)</button>
+                        <span id="location-note" class="small text-muted ms-2"></span></div>
+                    <div class="col-md-4"><label class="form-label" for="people">People needing help *</label>
+                        <input class="form-control" id="people" name="people" type="number" min="1" max="500" required value="{{ form.get('people','1') }}"></div>
+                    <div class="col-md-8"><label class="form-label" for="urgency">Urgency level *</label>
+                        <select class="form-select" id="urgency" name="urgency" required>
+                            {% for u in URGENCY_LEVELS %}<option value="{{ u }}" {{ 'selected' if form.get('urgency', 'High') == u }}>{{ u }}{% if u == 'Critical' %} - life at risk now{% elif u == 'High' %} - need help soon{% elif u == 'Medium' %} - safe for now, water rising{% else %} - need supplies / advice{% endif %}</option>{% endfor %}
+                        </select></div>
+                    <div class="col-12"><label class="form-label" for="description">Describe the emergency *</label>
+                        <textarea class="form-control" id="description" name="description" rows="4" required maxlength="1000" placeholder="What is happening? Water level? Any injuries?">{{ form.get('description','') }}</textarea></div>
+                    <div class="col-12"><label class="form-label" for="special_needs">Special assistance requirements</label>
+                        <input class="form-control" id="special_needs" name="special_needs" maxlength="500" value="{{ form.get('special_needs','') }}" placeholder="e.g. wheelchair user, infant, medication, pregnant">
+                    </div>
+                </div>
+                <button class="btn btn-help btn-lg mt-4 w-100"><i class="bi bi-send-fill"></i> Submit rescue request</button>
+                <p class="small text-muted mt-2 mb-0">After submitting you will get a unique request ID to track the status. Urgent requests are flagged for human review.</p>
+            </form>
+        </div></div>
+    </div></div>
+</div>
+{% endblock %}
